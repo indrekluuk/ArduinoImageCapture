@@ -1,9 +1,6 @@
-import gnu.io.CommPortIdentifier;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 /**
@@ -20,6 +17,7 @@ public class MainWindow {
   private BufferedImage imageBuffer;
   private JLabel imageContainer;
   private JComboBox<String> comPortSelection;
+  private JComboBox<Integer> baudRateSelection;
 
   private SerialReader serialReader;
 
@@ -54,6 +52,7 @@ public class MainWindow {
     JToolBar toolBar = new JToolBar();
     toolBar.setFloatable(false);
     toolBar.add(createComPortOption());
+    toolBar.add(createBaudRateOption());
     toolBar.add(createStartListeningButton());
     return toolBar;
   }
@@ -67,6 +66,11 @@ public class MainWindow {
   }
 
 
+  private JComboBox createBaudRateOption() {
+    baudRateSelection = new JComboBox<>();
+    serialReader.getAvailableBaudRates().forEach(option -> baudRateSelection.addItem(option));
+    return baudRateSelection;
+  }
 
 
   private JButton createStartListeningButton() {
@@ -80,7 +84,8 @@ public class MainWindow {
   private void startListening() {
     try {
       String selectedComPort = (String)comPortSelection.getSelectedItem();
-      serialReader.startListening(selectedComPort);
+      Integer baudRate = (Integer)baudRateSelection.getSelectedItem();
+      serialReader.startListening(selectedComPort, baudRate);
     } catch (SerialReaderException e) {
       JOptionPane.showMessageDialog(windowFrame, e.getMessage());
     }

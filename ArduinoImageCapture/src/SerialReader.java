@@ -3,6 +3,7 @@
  */
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import gnu.io.CommPortIdentifier;
@@ -24,11 +25,21 @@ public class SerialReader implements SerialPortEventListener {
 
   private SerialPort serialPort;
   private ImageCapture imageCapture;
-  private BufferedReader serialInput;
+  private InputStream serialInput;
   private OutputStream serialOutput;
 
   private static final int TIME_OUT = 2000;
-  private static final int DATA_RATE = 9600;
+
+
+  private List<Integer> baudrateList = Arrays.asList(
+      9600,
+      19200,
+      38400,
+      57600,
+      115200,
+      1000000,
+      2000000);
+
 
   public SerialReader(ImageCapture imageCapture) {
     this.imageCapture = imageCapture;
@@ -37,18 +48,21 @@ public class SerialReader implements SerialPortEventListener {
 
 
 
-  public void startListening(String portName) {
+  public void startListening(String portName, Integer baudRate) {
     CommPortIdentifier portIdentifier = getPortIdentifiers().get(portName);
     if (portIdentifier == null) {
       throw new SerialReaderException("'" + portName + "' not found");
     } else {
-      openPort(portIdentifier);
+      openPort(portIdentifier, baudRate);
     }
   }
 
 
 
-  private synchronized void openPort(CommPortIdentifier portIdentifier) {
+  private synchronized void openPort(
+      CommPortIdentifier portIdentifier,
+      Integer baudRate
+  ) {
     try {
       stopListening();
 
@@ -57,13 +71,12 @@ public class SerialReader implements SerialPortEventListener {
           TIME_OUT);
 
       serialPort.setSerialPortParams(
-          DATA_RATE,
+          baudRate,
           SerialPort.DATABITS_8,
           SerialPort.STOPBITS_1,
           SerialPort.PARITY_NONE);
 
-      // open the streams
-      serialInput = new BufferedReader(new InputStreamReader(serialPort.getInputStream()));
+      serialInput = serialPort.getInputStream();
       serialOutput = serialPort.getOutputStream();
 
       serialPort.addEventListener(this);
@@ -78,9 +91,9 @@ public class SerialReader implements SerialPortEventListener {
   public synchronized void serialEvent(SerialPortEvent oEvent) {
     if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
       try {
-        while(serialInput.ready()) {
-          int b = serialInput.read();
-          System.out.println(b);
+        int b;
+        while((b = serialInput.read()) > -1) {
+          imageCapture.addReceivedByte(b);
         }
       } catch (Exception e) {
         System.err.println(e.toString());
@@ -105,6 +118,9 @@ public class SerialReader implements SerialPortEventListener {
     return new ArrayList<>(getPortIdentifiers().keySet());
   }
 
+  public List<Integer> getAvailableBaudRates() {
+    return baudrateList;
+  }
 
   private Map<String, CommPortIdentifier> getPortIdentifiers() {
     Map<String, CommPortIdentifier> portIdentifierMap = new LinkedHashMap<>();
