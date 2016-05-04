@@ -27,7 +27,7 @@ public class MainWindow {
 
   public MainWindow(JFrame frame) {
     windowFrame = frame;
-    serialReader = new SerialReader();
+    serialReader = new SerialReader(new ImageCapture());
 
     mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.PAGE_START);
@@ -71,19 +71,18 @@ public class MainWindow {
 
   private JButton createStartListeningButton() {
     JButton listenButton = new JButton("Listen");
-    listenButton.addActionListener(event -> connectAndListen());
+    listenButton.addActionListener(event -> startListening());
     return listenButton;
   }
 
 
 
-  private void connectAndListen() {
-    String selectedComPort = (String)comPortSelection.getSelectedItem();
-    CommPortIdentifier identifier = serialReader.getPortIdentifierByName(selectedComPort);
-    if (identifier != null) {
-      JOptionPane.showMessageDialog(windowFrame, "Todo. connect " + selectedComPort);
-    } else {
-      JOptionPane.showMessageDialog(windowFrame, "'" + selectedComPort + "' not found");
+  private void startListening() {
+    try {
+      String selectedComPort = (String)comPortSelection.getSelectedItem();
+      serialReader.startListening(selectedComPort);
+    } catch (SerialReaderException e) {
+      JOptionPane.showMessageDialog(windowFrame, e.getMessage());
     }
   }
 
