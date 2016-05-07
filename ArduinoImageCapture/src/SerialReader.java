@@ -2,9 +2,7 @@
  * Created by indrek on 1.05.2016.
  */
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -24,25 +22,31 @@ import java.util.*;
 public class SerialReader implements SerialPortEventListener {
 
   private SerialPort serialPort;
-  private ImageCapture imageCapture;
   private InputStream serialInput;
   private OutputStream serialOutput;
 
   private static final int TIME_OUT = 2000;
 
 
-  private List<Integer> baudrateList = Arrays.asList(
-      9600,
-      19200,
-      38400,
-      57600,
-      115200,
+  private List<Integer> baudRateList = Arrays.asList(
+      //2000000, //unreliable
       1000000,
-      2000000);
+      115200,
+      57600,
+      38400,
+      19200,
+      9600);
 
 
-  public SerialReader(ImageCapture imageCapture) {
-    this.imageCapture = imageCapture;
+  public interface SerialDataReceived {
+    void serialDataReceived(byte receivedByte);
+  }
+
+  private SerialDataReceived serialReceivedCallback;
+
+
+  public SerialReader(SerialDataReceived callback) {
+    serialReceivedCallback = callback;
   }
 
 
@@ -93,7 +97,7 @@ public class SerialReader implements SerialPortEventListener {
       try {
         int b;
         while((b = serialInput.read()) > -1) {
-          imageCapture.addReceivedByte(b);
+          serialReceivedCallback.serialDataReceived((byte)(b));
         }
       } catch (Exception e) {
         System.err.println(e.toString());
@@ -115,11 +119,13 @@ public class SerialReader implements SerialPortEventListener {
 
 
   public List<String> getAvailablePorts() {
-    return new ArrayList<>(getPortIdentifiers().keySet());
+    List<String> ports = new ArrayList<>(getPortIdentifiers().keySet());
+    Collections.reverse(ports);
+    return ports;
   }
 
   public List<Integer> getAvailableBaudRates() {
-    return baudrateList;
+    return baudRateList;
   }
 
   private Map<String, CommPortIdentifier> getPortIdentifiers() {

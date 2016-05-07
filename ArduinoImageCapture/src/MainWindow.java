@@ -1,6 +1,7 @@
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -8,8 +9,8 @@ import java.awt.image.BufferedImage;
  */
 public class MainWindow {
 
-  private static Integer IMAGE_W = 640;
-  private static Integer IMAGE_H = 480;
+  private static Integer MAX_IMAGE_W = 640;
+  private static Integer MAX_IMAGE_H = 480;
 
 
   private JFrame windowFrame;
@@ -20,12 +21,14 @@ public class MainWindow {
   private JComboBox<Integer> baudRateSelection;
 
   private SerialReader serialReader;
+  private ImageCapture imageCapture;
 
 
 
   public MainWindow(JFrame frame) {
     windowFrame = frame;
-    serialReader = new SerialReader(new ImageCapture());
+    imageCapture = new ImageCapture(this::drawImage);
+    serialReader = new SerialReader(imageCapture::addReceivedByte);
 
     mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.PAGE_START);
@@ -36,16 +39,15 @@ public class MainWindow {
 
 
   private JComponent createImagePanel() {
-    imageBuffer = new BufferedImage(IMAGE_W,IMAGE_H,BufferedImage.TYPE_INT_ARGB);
+    imageBuffer = new BufferedImage(MAX_IMAGE_W,MAX_IMAGE_H,BufferedImage.TYPE_INT_ARGB);
     imageContainer = new JLabel(new ImageIcon(imageBuffer));
 
     JPanel imagePanel = new JPanel(new GridBagLayout());
-    imagePanel.setPreferredSize(new Dimension(IMAGE_W, IMAGE_H));
+    imagePanel.setPreferredSize(new Dimension(MAX_IMAGE_W, MAX_IMAGE_H));
     imagePanel.add(imageContainer);
 
     return new JScrollPane(imagePanel);
   }
-
 
 
   private JToolBar createToolbar() {
@@ -58,30 +60,28 @@ public class MainWindow {
   }
 
 
-
   private JComboBox createComPortOption() {
     comPortSelection = new JComboBox<>();
-    serialReader.getAvailablePorts().forEach(option -> comPortSelection.addItem(option));
+    serialReader.getAvailablePorts().forEach(comPortSelection::addItem);
     return comPortSelection;
   }
 
 
   private JComboBox createBaudRateOption() {
     baudRateSelection = new JComboBox<>();
-    serialReader.getAvailableBaudRates().forEach(option -> baudRateSelection.addItem(option));
+    serialReader.getAvailableBaudRates().forEach(baudRateSelection::addItem);
     return baudRateSelection;
   }
 
 
   private JButton createStartListeningButton() {
     JButton listenButton = new JButton("Listen");
-    listenButton.addActionListener(event -> startListening());
+    listenButton.addActionListener(this::startListening);
     return listenButton;
   }
 
 
-
-  private void startListening() {
+  private void startListening(ActionEvent event) {
     try {
       String selectedComPort = (String)comPortSelection.getSelectedItem();
       Integer baudRate = (Integer)baudRateSelection.getSelectedItem();
@@ -93,36 +93,25 @@ public class MainWindow {
 
 
 
-
-  private void drawPixel(int x, int y) {
+  private void drawImage(FrameData frameData) {
     Graphics2D g = imageBuffer.createGraphics();
-    for (x = 0; x < 640; x++) {
-      for (y = 0; y < 480; y++) {
-        g.setColor(getRandomColor());
-        g.drawRect(x, y, 1, 1);
+
+    for (int y = 0; y < frameData.getLineCount(); y++) {
+      for (int x = 0; x < frameData.getLineLength(); x++) {
+        if (x < MAX_IMAGE_W && y < MAX_IMAGE_H) {
+          g.setColor(frameData.getPixelColor(x, y));
+          g.drawRect(x, y, 1, 1);
+        }
       }
     }
     g.dispose();
     this.imageContainer.repaint();
   }
 
-  private Color getRandomColor() {
-    double rnd = Math.random();
-    if (rnd < 0.3) {
-      return Color.BLACK;
-    } else if (rnd < 0.5) {
-      return Color.WHITE;
-    } else if (rnd < 0.7){
-      return Color.BLUE;
-    } else {
-      return Color.YELLOW;
-    }
-  }
 
 
   public static void main(String[] args) {
     JFrame frame = new JFrame("Arduino Image Capture");
-
     MainWindow window = new MainWindow(frame);
     frame.setContentPane(window.mainPanel);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
