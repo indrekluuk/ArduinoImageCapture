@@ -28,10 +28,10 @@ public class ImageCapture {
   private int bufferFillIndex = 0;
 
   private static final byte END_OF_LINE[] = new byte[] {
-      (byte)0x01, (byte)0x01, (byte)0xFE, (byte)0xFE, (byte)0xFE};
+      (byte)0x00};
 
   private static final byte END_OF_FRAME[] = new byte[] {
-      (byte)0xFE, (byte)0xFE, (byte)0x01, (byte)0x01, (byte)0x01};
+      (byte)0xFF, (byte)0x00, (byte)0x00, (byte)0x00};
 
 
 
@@ -81,12 +81,13 @@ public class ImageCapture {
     int imageWidth = get2ByteInteger_H_L(bufferFillIndex - END_OF_FRAME.length - 1 - 2 - 2);
     int imageHeight = get2ByteInteger_H_L(bufferFillIndex - END_OF_FRAME.length - 1 - 2);
     PixelFormat pixelFormat = getPixelFormat(getByte(bufferFillIndex - END_OF_FRAME.length - 1));
+    int bufferIndexEnd = bufferFillIndex - END_OF_FRAME.length - 4;
 
     if (imageWidth <= MAX_X && imageHeight <= MAX_Y) {
       FrameData frameData = new FrameData(imageWidth, imageHeight);
 
       int lineStart = 0;
-      for(int bufferIndex = 0; bufferIndex < bufferFillIndex; bufferIndex++) {
+      for(int bufferIndex = 0; bufferIndex <bufferIndexEnd; bufferIndex++) {
         if (isReceived(END_OF_LINE, bufferIndex)) {
           frameData.newLine();
           processLine(
