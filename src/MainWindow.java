@@ -76,16 +76,19 @@ public class MainWindow {
 
   private JButton createStartListeningButton() {
     JButton listenButton = new JButton("Listen");
-    listenButton.addActionListener(this::startListening);
+    listenButton.addActionListener((event)->{
+      this.startListening(listenButton, event);
+    });
     return listenButton;
   }
 
 
-  private void startListening(ActionEvent event) {
+  private void startListening(JButton listenButton, ActionEvent event) {
     try {
       String selectedComPort = (String)comPortSelection.getSelectedItem();
       Integer baudRate = (Integer)baudRateSelection.getSelectedItem();
       serialReader.startListening(selectedComPort, baudRate);
+      listenButton.setEnabled(false);
     } catch (SerialReaderException e) {
       JOptionPane.showMessageDialog(windowFrame, e.getMessage());
     }
