@@ -11,7 +11,9 @@ https://www.jetbrains.com/idea/download
 Or if you already have an open project then "File"->"New"->"Project from Existing Sources..."  
 ![filenew](https://user-images.githubusercontent.com/1666508/48670252-640db900-eb1d-11e8-9ce7-36674f8d4a74.png)  
 
-Next->Next->Next->Next->Next-> (Add/Select your Java version. For me it was "C:\Program Files\Java\jdk1.8.0_131") Next -> Finish
+Next->Next->Next->Next->Next-> 
+(Add/Select your Java version. For me it was "C:\Program Files\Java\jdk1.8.0_131")
+Next -> Finish
 
 5. Add new run configuration  
   
