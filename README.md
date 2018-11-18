@@ -9,7 +9,7 @@ https://www.jetbrains.com/idea/download
 3. Open IntellJ and click on "Import Project"  
 ![importproject](https://user-images.githubusercontent.com/1666508/48670176-bc43bb80-eb1b-11e8-95be-7bb644be81e1.png)  
 Or if you already have an open project then "File"->"New"->"Project from Existing Sources..."  
-![filenew](https://user-images.githubusercontent.com/1666508/48670177-bea61580-eb1b-11e8-83f9-1cacf9f7f9ce.png)  
+![filenew](https://user-images.githubusercontent.com/1666508/48670252-640db900-eb1d-11e8-9ce7-36674f8d4a74.png)  
 
 Next->Next->Next->Next->Next-> (Add/Select your Java version. For me it was "C:\Program Files\Java\jdk1.8.0_131") Next -> Finish
 
