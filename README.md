@@ -6,13 +6,12 @@ https://www.jetbrains.com/idea/download
 
 2. Download ArduinoImageCapture from Github.
 
-3. Copy files from ArduinoImageCapture\external\rxtx-win-x64 to correct locations in JAVA home folder  
-Copy RXTXcomm.jar ---> <JAVA_HOME>/jre/lib/ext  
-Copy librxtxSerial.so ---> <JAVA_HOME>/jre/lib/i386/  
-Copy librxtxParallel.so ---> <JAVA_HOME>/jre/lib/i386/  
+3. Open IntellJ and click on "Import Project"  
+![importproject](https://user-images.githubusercontent.com/1666508/48670176-bc43bb80-eb1b-11e8-95be-7bb644be81e1.png)  
+Or if you already have an open project then "File"->"New"->"Project from Existing Sources..."  
+![filenew](https://user-images.githubusercontent.com/1666508/48670177-bea61580-eb1b-11e8-83f9-1cacf9f7f9ce.png)  
 
-4. Open IntellJ and click on "Import Project"->select "ArduinoImageCapture" folder.  
-(Create project from existing source) Next->Next->Next->Next->Next-> (Add/Select your Java version. For me it was "C:\Program Files\Java\jdk1.8.0_131") Next -> Finish
+Next->Next->Next->Next->Next-> (Add/Select your Java version. For me it was "C:\Program Files\Java\jdk1.8.0_131") Next -> Finish
 
 5. Add new run configuration  
   
@@ -24,6 +23,12 @@ Copy librxtxParallel.so ---> <JAVA_HOME>/jre/lib/i386/
 
 - Name the configuration and select main java class
 ![selecttarget](https://cloud.githubusercontent.com/assets/1666508/25311682/20783886-2810-11e7-8ae7-6ecf5cee3a85.png)
+
+- Add java external library path to the VM options field:
+![selecttarget](https://user-images.githubusercontent.com/1666508/48670234-f06bac00-eb1c-11e8-8a75-7b30c7bdf2e9.png)
+Since I have 64bit Java for windows I had to add:  
+-Djava.library.path=lib\rxtx-2.2pre2-bins\win64
+
 
 - Now you should be able to run the application by clicking the green arrow in the upper right corner.
 ![run](https://cloud.githubusercontent.com/assets/1666508/25311701/6b3b2c0c-2810-11e7-8d70-1218eb92da40.png)
