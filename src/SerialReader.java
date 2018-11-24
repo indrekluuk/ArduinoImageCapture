@@ -13,7 +13,7 @@ import java.util.*;
 
 
 // VM options for DLL files
-// -Djava.library.path=ArduinoImageCapture\external\rxtx-win-x64
+// -Djava.library.path=lib\rxtx-2.2pre2-bins\win64
 
 
 
