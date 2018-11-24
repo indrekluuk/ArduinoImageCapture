@@ -26,7 +26,7 @@ Next -> Finish
 - Name the configuration and select main java class
 ![selecttarget](https://cloud.githubusercontent.com/assets/1666508/25311682/20783886-2810-11e7-8ae7-6ecf5cee3a85.png)
 
-- Add java external library path (dll files) to the VM options field:
+- Add java external library path (for rxtx library dll file) to the VM options field:
 ![selecttarget](https://user-images.githubusercontent.com/1666508/48670234-f06bac00-eb1c-11e8-8a75-7b30c7bdf2e9.png)
 Since I have 64bit Java for windows I had to add:  
 -Djava.library.path=lib\rxtx-2.2pre2-bins\win64
