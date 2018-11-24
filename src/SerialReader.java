@@ -29,14 +29,13 @@ public class SerialReader implements SerialPortEventListener {
 
 
   private List<Integer> baudRateList = Arrays.asList(
-      //2000000, //unreliable
+      2000000, //may be unreliable
       1000000,
       115200,
       57600,
       38400,
       19200,
       9600);
-
 
   public interface SerialDataReceived {
     void serialDataReceived(byte receivedByte);
@@ -126,6 +125,10 @@ public class SerialReader implements SerialPortEventListener {
 
   public List<Integer> getAvailableBaudRates() {
     return baudRateList;
+  }
+
+  public Integer getDefaultBaudRate() {
+    return baudRateList.get(1);
   }
 
   private Map<String, CommPortIdentifier> getPortIdentifiers() {

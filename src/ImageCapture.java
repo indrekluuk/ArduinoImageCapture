@@ -1,6 +1,6 @@
-import org.omg.CORBA.PRIVATE_MEMBER;
-
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Created by indrek on 4.05.2016.
@@ -8,8 +8,7 @@ import java.util.List;
 public class ImageCapture {
 
   enum PixelFormat {
-    PIXEL_RGB565(2),
-    PIXEL_BAYERRGB(1);
+    PIXEL_RGB565(2);
 
     private int byteCount;
     PixelFormat(int byteCount) {
@@ -20,23 +19,27 @@ public class ImageCapture {
     }
   }
 
-  private static final int MAX_X = 640;
-  private static final int MAX_Y = 480;
+  private static final int MAX_W = 640;
+  private static final int MAX_H = 480;
 
-  private static final int MAX_BUFFER_SIZE = MAX_X * MAX_Y * 2 + 1000;
-  private byte buffer[] = new byte[MAX_BUFFER_SIZE];
-  private int bufferFillIndex = 0;
+  private static final byte START_COMMAND = (byte) 0x00;
+  private static final byte COMMAND_NEW_FRAME = (byte) 0x01;
+  private static final byte COMMAND_END_OF_LINE = (byte) 0x02;
 
-  private static final byte END_OF_LINE[] = new byte[] {
-      (byte)0x00};
+  private static final int COMMAND_NEW_FRAME_LENGTH = 5;
 
-  private static final byte END_OF_FRAME[] = new byte[] {
-      (byte)0xFF, (byte)0x00, (byte)0x00, (byte)0x00};
+  int activeCommand = -1;
+  int commandByteCount = 0;
+  private ByteArrayOutputStream commandBytes = new ByteArrayOutputStream();
+  private ByteArrayOutputStream pixelBytes = new ByteArrayOutputStream();
+
+  private Frame frame = new Frame(0, 0);
+  private PixelFormat pixelFormat = PixelFormat.PIXEL_RGB565;
 
 
 
   public interface ImageCaptured {
-    void imageCaptured(FrameData frameData);
+    void imageCaptured(Frame frame, Integer lineNumber);
   }
 
 
@@ -51,68 +54,68 @@ public class ImageCapture {
 
 
   public void addReceivedByte(byte receivedByte) {
-    buffer[bufferFillIndex] = receivedByte;
-    bufferFillIndex++;
-    if (bufferFillIndex >= MAX_BUFFER_SIZE) bufferFillIndex = 0;
-
-    if (isReceived(END_OF_FRAME, bufferFillIndex)) {
-      processFrameBuffer();
-      bufferFillIndex = 0;
-    }
-  }
-
-
-
-  private boolean isReceived(byte [] sequence, int bufferIndex) {
-    if (bufferIndex < sequence.length) {
-      return false;
-    }
-    for (int i=0; i<sequence.length; i++) {
-      if (sequence[i] != buffer[bufferIndex - sequence.length + i]) {
-        return false;
+    if (activeCommand < 0) {
+      if (receivedByte == START_COMMAND) {
+        activeCommand = START_COMMAND;
+      } else {
+        processPixelByte(receivedByte);
       }
+    } else {
+      processCommandByte(receivedByte);
     }
-    return true;
   }
 
+  private void processCommandByte(byte receivedByte) {
+    if (activeCommand == START_COMMAND) {
+      initCommand(receivedByte);
+    } else {
+      commandBytes.write(receivedByte);
+    }
 
-
-  private void processFrameBuffer() {
-    int imageWidth = get2ByteInteger_H_L(bufferFillIndex - END_OF_FRAME.length - 1 - 2 - 2);
-    int imageHeight = get2ByteInteger_H_L(bufferFillIndex - END_OF_FRAME.length - 1 - 2);
-    PixelFormat pixelFormat = getPixelFormat(getByte(bufferFillIndex - END_OF_FRAME.length - 1));
-    int bufferIndexEnd = bufferFillIndex - END_OF_FRAME.length - 4;
-
-    if (imageWidth <= MAX_X && imageHeight <= MAX_Y) {
-      FrameData frameData = new FrameData(imageWidth, imageHeight);
-
-      int lineStart = 0;
-      for(int bufferIndex = 0; bufferIndex <bufferIndexEnd; bufferIndex++) {
-        if (isReceived(END_OF_LINE, bufferIndex)) {
-          frameData.newLine();
-          processLine(
-              frameData,
-              lineStart,
-              bufferIndex - END_OF_LINE.length,
-              pixelFormat);
-          lineStart = bufferIndex;
-        }
+    if (commandBytes.size() >= commandByteCount) {
+      if (activeCommand == COMMAND_NEW_FRAME) {
+        startNewFrame(commandBytes.toByteArray());
+      } else if (activeCommand == COMMAND_END_OF_LINE) {
+        endOfLine();
+      } else {
+        System.out.println("Unknown command code '" + activeCommand + "'");
       }
-
-      imageCapturedCallback.imageCaptured(frameData);
+      activeCommand =-1;
     }
   }
 
-  private void processLine(
-      FrameData frameData,
-      int index,
-      int lineEndIndex,
-      PixelFormat pixelFormat
-  ) {
-    while (index < lineEndIndex) {
-      PixelData pixelData = getPixel(index, pixelFormat);
-      frameData.addPixel(pixelData);
-      index += pixelFormat.getByteCount();
+  private void initCommand(byte command) {
+    activeCommand = command;
+    commandBytes.reset();
+    if (command == COMMAND_NEW_FRAME) {
+      commandByteCount = COMMAND_NEW_FRAME_LENGTH;
+    } else {
+      commandByteCount = 0;
+    }
+  }
+
+  private void startNewFrame(byte [] frameDataBytes) {
+    ByteBuffer frameData = ByteBuffer.wrap(frameDataBytes);
+    frameData.order(ByteOrder.BIG_ENDIAN); // or LITTLE_ENDIAN
+    int w = frameData.getShort();
+    int h = frameData.getShort();
+    frame = new Frame(w > MAX_W ? MAX_W : w, h > MAX_H ? MAX_H : h);
+    pixelFormat = getPixelFormat(frameData.get());
+    pixelBytes.reset();
+  }
+
+  private void endOfLine() {
+    imageCapturedCallback.imageCaptured(frame, frame.getCurrentLineIndex());
+    frame.newLine();
+  }
+
+
+  private void processPixelByte(byte receivedByte) {
+    pixelBytes.write(receivedByte);
+    if (pixelBytes.size() >= pixelFormat.getByteCount()) {
+      Pixel pixel = getPixel(pixelBytes.toByteArray());
+      frame.addPixel(pixel);
+      pixelBytes.reset();
     }
   }
 
@@ -120,41 +123,47 @@ public class ImageCapture {
   private PixelFormat getPixelFormat(int code) {
     switch (code) {
       default:
-      case 0: return PixelFormat.PIXEL_RGB565;
-      case 1: return PixelFormat.PIXEL_BAYERRGB;
+        System.out.println("Unknown pixel format code '" + code + "'");
+      case 0:
+        return PixelFormat.PIXEL_RGB565;
     }
   }
 
 
-  private PixelData getPixel(int index, PixelFormat pixelFormat) {
+
+  public Pixel getPixel(byte [] data) {
     switch (pixelFormat) {
       default:
       case PIXEL_RGB565:
-        int rawPixelData = get2ByteInteger_H_L(index);
+        int rawPixelData = get2ByteInteger_H_L(data);
+
         // rrrr rggg gggb bbbb
         int r = (rawPixelData >> 8) & 0xF8;
         int g = (rawPixelData >> 3) & 0xFC;
         int b = (rawPixelData << 3) & 0xF8;
-        return new PixelData(r, g, b);
-
-      case PIXEL_BAYERRGB:
-        int data = getByte(index);
-        return new PixelData(data, data, data);
+        return new Pixel(r, g, b);
     }
   }
 
 
 
-  private int getByte(int bufferIndex) {
-    return buffer[bufferIndex] & 0xFF;
+
+
+
+  private int get2ByteInteger_H_L(byte [] data) {
+    if (data.length > 1) {
+      return ((data[0] & 0xFF) << 8) + (data[1] & 0xFF);
+    } else {
+      return 0;
+    }
   }
 
-  private int get2ByteInteger_H_L(int bufferIndex) {
-    return ((buffer[bufferIndex] & 0xFF) << 8) + (buffer[bufferIndex + 1] & 0xFF);
-  }
-
-  private int get2ByteInteger_L_H(int bufferIndex) {
-    return ((buffer[bufferIndex + 1] & 0xFF) << 8) + (buffer[bufferIndex] & 0xFF);
+  private int get2ByteInteger_L_H(byte [] data) {
+    if (data.length > 1) {
+      return ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
+    } else {
+      return 0;
+    }
   }
 
 

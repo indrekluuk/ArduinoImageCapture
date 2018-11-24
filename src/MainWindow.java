@@ -70,6 +70,7 @@ public class MainWindow {
   private JComboBox createBaudRateOption() {
     baudRateSelection = new JComboBox<>();
     serialReader.getAvailableBaudRates().forEach(baudRateSelection::addItem);
+    baudRateSelection.setSelectedItem(serialReader.getDefaultBaudRate());
     return baudRateSelection;
   }
 
@@ -96,19 +97,28 @@ public class MainWindow {
 
 
 
-  private void drawImage(FrameData frameData) {
-    Graphics2D g = imageBuffer.createGraphics();
+  private void drawImage(Frame frame, Integer lineIndex) {
+    JLabel imageContainer = this.imageContainer;
 
-    for (int y = 0; y < frameData.getLineCount(); y++) {
-      for (int x = 0; x < frameData.getLineLength(); x++) {
-        if (x < MAX_IMAGE_W && y < MAX_IMAGE_H) {
-          g.setColor(frameData.getPixelColor(x, y));
-          g.drawRect(x, y, 1, 1);
+    // update image in a separate thread so it would not block reading data
+    new Thread(() -> {
+      synchronized (imageContainer) {
+        Graphics2D g = imageBuffer.createGraphics();
+        int fromLine = lineIndex != null ? lineIndex : 0;
+        int toLine = lineIndex != null ? lineIndex : frame.getLineCount() - 1;
+
+        for (int y = fromLine; y <= toLine; y++) {
+          for (int x = 0; x < frame.getLineLength(); x++) {
+            if (x < MAX_IMAGE_W && y < MAX_IMAGE_H) {
+              g.setColor(frame.getPixelColor(x, y));
+              g.drawLine(x, y, x, y);
+            }
+          }
         }
+        g.dispose();
+        imageContainer.repaint();
       }
-    }
-    g.dispose();
-    this.imageContainer.repaint();
+    }).start();
   }
 
 
