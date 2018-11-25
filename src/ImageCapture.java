@@ -87,6 +87,7 @@ public class ImageCapture {
   private void initCommand(byte command) {
     activeCommand = command;
     commandBytes.reset();
+    pixelBytes.reset();
     if (command == COMMAND_NEW_FRAME) {
       commandByteCount = COMMAND_NEW_FRAME_LENGTH;
     } else {
@@ -101,7 +102,6 @@ public class ImageCapture {
     int h = frameData.getShort();
     frame = new Frame(w > MAX_W ? MAX_W : w, h > MAX_H ? MAX_H : h);
     pixelFormat = getPixelFormat(frameData.get());
-    pixelBytes.reset();
   }
 
   private void endOfLine() {
