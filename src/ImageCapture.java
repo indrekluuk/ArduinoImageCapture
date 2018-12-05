@@ -98,10 +98,14 @@ public class ImageCapture {
   private void startNewFrame(byte [] frameDataBytes) {
     ByteBuffer frameData = ByteBuffer.wrap(frameDataBytes);
     frameData.order(ByteOrder.BIG_ENDIAN); // or LITTLE_ENDIAN
-    int w = frameData.getShort();
-    int h = frameData.getShort();
-    frame = new Frame(w > MAX_W ? MAX_W : w, h > MAX_H ? MAX_H : h);
+    int w = parseFrameDimension(frameData.getShort(), 1, MAX_W);
+    int h = parseFrameDimension(frameData.getShort(), 1, MAX_H);
+    frame = new Frame(w, h);
     pixelFormat = getPixelFormat(frameData.get());
+  }
+
+  private int parseFrameDimension(int d, int min, int max) {
+    return d > max ? max : (d < min ? min : d);
   }
 
   private void endOfLine() {
