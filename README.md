@@ -29,9 +29,11 @@ Next -> Finish
 - Add java external library path (for rxtx library dll file) to the VM options field:
 ![selecttarget](https://user-images.githubusercontent.com/1666508/48670234-f06bac00-eb1c-11e8-8a75-7b30c7bdf2e9.png)
 Since I have 64bit Java for windows I had to add:  
--Djava.library.path=lib\rxtx-2.2pre2-bins\win64
-
-
+-Djava.library.path=lib/rxtx-2.2pre2-bins/win64  
+For MacOS:  
+-Djava.library.path=lib/rxtx-2.2pre2-bins/mac-10.5  
+  
+  
 - Now you should be able to run the application by clicking the green arrow in the upper right corner.
 ![run](https://cloud.githubusercontent.com/assets/1666508/25311701/6b3b2c0c-2810-11e7-8d70-1218eb92da40.png)
 
