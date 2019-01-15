@@ -8,7 +8,8 @@ import java.nio.ByteOrder;
 public class ImageCapture {
 
   enum PixelFormat {
-    PIXEL_RGB565(2);
+    PIXEL_RGB565(2),
+    PIXEL_GRAYSCALE(1);
 
     private int byteCount;
     PixelFormat(int byteCount) {
@@ -128,8 +129,10 @@ public class ImageCapture {
     switch (code) {
       default:
         System.out.println("Unknown pixel format code '" + code + "'");
-      case 0:
+      case 1:
         return PixelFormat.PIXEL_RGB565;
+      case 2:
+        return PixelFormat.PIXEL_GRAYSCALE;
     }
   }
 
@@ -138,14 +141,21 @@ public class ImageCapture {
   public Pixel getPixel(byte [] data) {
     switch (pixelFormat) {
       default:
-      case PIXEL_RGB565:
+      case PIXEL_RGB565: {
         int rawPixelData = get2ByteInteger_H_L(data);
-
         // rrrr rggg gggb bbbb
         int r = (rawPixelData >> 8) & 0xF8;
         int g = (rawPixelData >> 3) & 0xFC;
         int b = (rawPixelData << 3) & 0xF8;
         return new Pixel(r, g, b);
+      }
+      case PIXEL_GRAYSCALE: {
+        int rawPixelData = data[0] & 0xFF;
+        int r = rawPixelData;
+        int g = rawPixelData;
+        int b = rawPixelData;
+        return new Pixel(r, g, b);
+      }
     }
   }
 
