@@ -1,8 +1,12 @@
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by indrek on 1.05.2016.
@@ -12,9 +16,17 @@ public class MainWindow {
   private static Integer MAX_IMAGE_W = 640;
   private static Integer MAX_IMAGE_H = 480;
 
+  private static final String WINDOW_TITLE = "Arduino Image Capture";
+  private static final String BUTTON_NAME_LISTEN = "Listen";
+  private static final String BUTTON_NAME_SELECT_SAVE_FOLDER = "Select save folder";
+  private static final String SELECT_SAVE_FOLDER_TILE = "Save images to";
+
 
   private JFrame windowFrame;
   private JPanel mainPanel;
+  private File selectedFolder;
+  private JLabel saveCountLabel = new JLabel();
+  private Integer saveCounter = 0;
   private BufferedImage imageBuffer;
   private JLabel imageContainer;
   private JComboBox<String> comPortSelection;
@@ -33,10 +45,39 @@ public class MainWindow {
     mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.PAGE_START);
     mainPanel.add(createImagePanel(), BorderLayout.CENTER);
+    mainPanel.add(createSavePanel(), BorderLayout.PAGE_END);
   }
 
 
+  private JComponent createSavePanel() {
+    JPanel  saveBar = new JPanel ();
+    saveBar.setLayout(new BoxLayout(saveBar, BoxLayout.X_AXIS));
+    JLabel filePathLabel = new JLabel();
 
+    saveBar.add(createSelectFolderButton(filePathLabel));
+    saveBar.add(Box.createHorizontalStrut(10));
+    saveBar.add(filePathLabel);
+    saveBar.add(saveCountLabel);
+
+    return saveBar;
+  }
+
+  private JButton createSelectFolderButton(JLabel filePathLabel) {
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    fileChooser.setDialogTitle(SELECT_SAVE_FOLDER_TILE);
+
+    JButton listenButton = new JButton(BUTTON_NAME_SELECT_SAVE_FOLDER);
+    listenButton.addActionListener((event)->{
+      fileChooser.setCurrentDirectory(selectedFolder == null ? new File(System.getProperty("user.dir")) : selectedFolder);
+
+      if (fileChooser.showOpenDialog(listenButton) == JFileChooser.APPROVE_OPTION) {
+        selectedFolder = fileChooser.getSelectedFile();
+        filePathLabel.setText(selectedFolder.getAbsolutePath());
+      }
+    });
+    return listenButton;
+  }
 
   private JComponent createImagePanel() {
     imageBuffer = new BufferedImage(MAX_IMAGE_W,MAX_IMAGE_H,BufferedImage.TYPE_INT_ARGB);
@@ -76,7 +117,7 @@ public class MainWindow {
 
 
   private JButton createStartListeningButton() {
-    JButton listenButton = new JButton("Listen");
+    JButton listenButton = new JButton(BUTTON_NAME_LISTEN);
     listenButton.addActionListener((event)->{
       this.startListening(listenButton, event);
     });
@@ -115,16 +156,34 @@ public class MainWindow {
             }
           }
         }
-        g.dispose();
         imageContainer.repaint();
+        // wait for last line to be drawn
+        if (selectedFolder != null && lineIndex == frame.getLineCount() - 1) {
+          saveImageToFile(imageBuffer.getSubimage(0, 0, frame.getLineLength(), frame.getLineCount()), selectedFolder);
+        }
       }
     }).start();
   }
 
 
+  private void saveImageToFile(BufferedImage image, File toFolder) {
+    try {
+      // save image to png file
+      File newFile = new File(toFolder.getAbsolutePath(), getNextFileName());
+      ImageIO.write(image, "png", newFile);
+      saveCountLabel.setText(" (" + (++saveCounter) + ")");
+    } catch (Exception e) {
+      System.out.println("Saving file failed: " + e.getMessage());
+    }
+  }
+
+  private String getNextFileName() {
+    return (new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss.SSS")).format(new Date()) + ".png";
+  }
+
 
   public static void main(String[] args) {
-    JFrame frame = new JFrame("Arduino Image Capture");
+    JFrame frame = new JFrame(WINDOW_TITLE);
     MainWindow window = new MainWindow(frame);
     frame.setContentPane(window.mainPanel);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
