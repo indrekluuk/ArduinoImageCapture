@@ -21,6 +21,8 @@ public class MainWindow {
   private static final String BUTTON_NAME_SELECT_SAVE_FOLDER = "Select save folder";
   private static final String SELECT_SAVE_FOLDER_TILE = "Save images to";
 
+  private static final String DEFAULT_IMAGE_PATH = "/img";
+
 
   private JFrame windowFrame;
   private JPanel mainPanel;
@@ -69,7 +71,8 @@ public class MainWindow {
 
     JButton listenButton = new JButton(BUTTON_NAME_SELECT_SAVE_FOLDER);
     listenButton.addActionListener((event)->{
-      fileChooser.setCurrentDirectory(selectedFolder == null ? new File(System.getProperty("user.dir")) : selectedFolder);
+      fileChooser.setCurrentDirectory(selectedFolder == null ?
+              new File(System.getProperty("user.dir") + DEFAULT_IMAGE_PATH) : selectedFolder);
 
       if (fileChooser.showOpenDialog(listenButton) == JFileChooser.APPROVE_OPTION) {
         selectedFolder = fileChooser.getSelectedFile();
