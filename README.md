@@ -40,6 +40,12 @@ For MacOS:
 - Application window should open
 ![mainwindow](https://cloud.githubusercontent.com/assets/1666508/25311714/983cd91c-2810-11e7-9827-48360fd00de5.png)
 
+<br>
+<br>
+<br>
+<br>
+<br>
+
 ----
 
 # Building ArduinoImageCapture.jar
