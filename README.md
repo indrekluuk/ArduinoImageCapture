@@ -40,4 +40,27 @@ For MacOS:
 - Application window should open
 ![mainwindow](https://cloud.githubusercontent.com/assets/1666508/25311714/983cd91c-2810-11e7-9827-48360fd00de5.png)
 
+----
+
+# Building ArduinoImageCapture.jar
+1. Select "File"->"Project Structure..."  
+Add new Artifact "JAR":
+![New Artifact](https://user-images.githubusercontent.com/1666508/54083596-38ae1480-432e-11e9-8082-f44c33d7e48f.png)
+  
+2. Select "MainWindow" as main class and click OK
+![Main Class](https://user-images.githubusercontent.com/1666508/54083600-3ba90500-432e-11e9-8766-0b559ee70aa8.png)
+  
+3. Select "Build"->"Build Artifacts..."
+Then select "ArduinoImageCapture:jar"->"Build"
+![Build Jar](https://user-images.githubusercontent.com/1666508/54083601-3d72c880-432e-11e9-957e-9e78611b135c.png)
+  
+4. Now There should be "ArduinoImageCapture.jar" in "out/artifacts/ArduinoImageCapture_jar" folder
+Copy your platform specific "rxtxSerial.dll" next to the "ArduinoImageCapture.jar".
+![Copy DLL](https://user-images.githubusercontent.com/1666508/54083602-3ea3f580-432e-11e9-98ed-cc9c6866e9f1.png)
+  
+5. Now if you open "out/artifacts/ArduinoImageCapture_jar" in Explorer you should be able to double click on the "ArduinoImageCapture.jar" and program should open
+![Double-Click](https://user-images.githubusercontent.com/1666508/54083689-d35b2300-432f-11e9-96f1-3772a4457e7e.png)
+
+
+
 
