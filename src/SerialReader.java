@@ -2,24 +2,18 @@
  * Created by indrek on 1.05.2016.
  */
 
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
+
 import java.io.InputStream;
 import java.io.OutputStream;
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
 
 import java.util.*;
 
 
-// VM options for DLL files
-// -Djava.library.path=lib\rxtx-2.2pre2-bins\win64
 
-
-
-// http://stackoverflow.com/questions/15996345/java-arduino-read-data-from-the-serial-port
-
-public class SerialReader implements SerialPortEventListener {
+public class SerialReader implements SerialPortDataListener {
 
   private SerialPort serialPort;
   private InputStream serialInput;
@@ -52,47 +46,51 @@ public class SerialReader implements SerialPortEventListener {
 
 
   public void startListening(String portName, Integer baudRate) {
-    CommPortIdentifier portIdentifier = getPortIdentifiers().get(portName);
-    if (portIdentifier == null) {
+    SerialPort serialPort = getSerialPorts().get(portName);
+    if (serialPort == null) {
       throw new SerialReaderException("'" + portName + "' not found");
     } else {
-      openPort(portIdentifier, baudRate);
+      openPort(serialPort, baudRate);
     }
   }
 
 
 
   private synchronized void openPort(
-      CommPortIdentifier portIdentifier,
+      SerialPort openSerialPort,
       Integer baudRate
   ) {
     try {
       stopListening();
 
-      serialPort = (SerialPort) portIdentifier.open(
-          this.getClass().getName(),
-          TIME_OUT);
+      serialPort = openSerialPort;
+      serialPort.openPort();
 
-      serialPort.setSerialPortParams(
-          baudRate,
-          SerialPort.DATABITS_8,
-          SerialPort.STOPBITS_1,
-          SerialPort.PARITY_NONE);
+      serialPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, TIME_OUT, TIME_OUT);
+      serialPort.setComPortParameters(
+              baudRate,
+              8,
+              SerialPort.ONE_STOP_BIT,
+              SerialPort.NO_PARITY);
 
       serialInput = serialPort.getInputStream();
       serialOutput = serialPort.getOutputStream();
 
-      serialPort.addEventListener(this);
-      serialPort.notifyOnDataAvailable(true);
+      serialPort.addDataListener(this);
     } catch (Exception e) {
       throw new SerialReaderException("Connect failed " + e.getMessage());
     }
   }
 
 
+  @Override
+  public int getListeningEvents() {
+    return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+  }
 
+  @Override
   public synchronized void serialEvent(SerialPortEvent oEvent) {
-    if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
+    if (oEvent.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
       try {
         int b;
         while((b = serialInput.read()) > -1) {
@@ -107,18 +105,17 @@ public class SerialReader implements SerialPortEventListener {
   }
 
 
-
   public synchronized void stopListening() {
     if (serialPort != null) {
-      serialPort.removeEventListener();
-      serialPort.close();
+      serialPort.removeDataListener();
+      serialPort.closePort();
       serialPort = null;
     }
   }
 
 
   public List<String> getAvailablePorts() {
-    List<String> ports = new ArrayList<>(getPortIdentifiers().keySet());
+    List<String> ports = new ArrayList<>(getSerialPorts().keySet());
     Collections.reverse(ports);
     return ports;
   }
@@ -131,12 +128,11 @@ public class SerialReader implements SerialPortEventListener {
     return baudRateList.get(1);
   }
 
-  private Map<String, CommPortIdentifier> getPortIdentifiers() {
-    Map<String, CommPortIdentifier> portIdentifierMap = new LinkedHashMap<>();
-    Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
-    while(portEnum.hasMoreElements()) {
-      CommPortIdentifier portIdentifier = (CommPortIdentifier) portEnum.nextElement();
-      portIdentifierMap.put(portIdentifier.getName(), portIdentifier);
+  private Map<String, SerialPort> getSerialPorts() {
+    Map<String, SerialPort> portIdentifierMap = new LinkedHashMap<>();
+    SerialPort serialPorts [] = SerialPort.getCommPorts();
+    for(SerialPort serialPort : serialPorts) {
+      portIdentifierMap.put(serialPort.getSystemPortName(), serialPort);
     }
     return portIdentifierMap;
   }
