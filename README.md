@@ -55,7 +55,7 @@ Then select "ArduinoImageCapture:jar"->"Build"
 4. Now There should be "ArduinoImageCapture.jar" in "out/artifacts/ArduinoImageCapture_jar" folder
   
 5. Now if you open "out/artifacts/ArduinoImageCapture_jar" in Explorer you should be able to double click on the "ArduinoImageCapture.jar" and program should open
-![Double-Click](https://user-images.githubusercontent.com/1666508/54083689-d35b2300-432f-11e9-96f1-3772a4457e7e.png)
+![Double-Click](https://user-images.githubusercontent.com/1666508/91224706-2e065b80-e72b-11ea-925e-f2c23cdddb83.png)
 
 
 
