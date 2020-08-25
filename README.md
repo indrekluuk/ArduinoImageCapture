@@ -30,7 +30,7 @@ Next -> Finish
 ![run](https://cloud.githubusercontent.com/assets/1666508/25311701/6b3b2c0c-2810-11e7-8d70-1218eb92da40.png)
 
 - Application window should open
-![mainwindow](https://user-images.githubusercontent.com/1666508/91224706-2e065b80-e72b-11ea-925e-f2c23cdddb83.png)
+![mainwindow](https://cloud.githubusercontent.com/assets/1666508/25311714/983cd91c-2810-11e7-9827-48360fd00de5.png)
 
 <br>
 <br>
