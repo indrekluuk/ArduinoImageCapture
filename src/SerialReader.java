@@ -92,8 +92,8 @@ public class SerialReader implements SerialPortDataListener {
   public synchronized void serialEvent(SerialPortEvent oEvent) {
     if (oEvent.getEventType() == SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
       try {
-        int b;
-        while((b = serialInput.read()) > -1) {
+        while(serialInput.available() > 0) {
+          int b = serialInput.read();
           serialReceivedCallback.serialDataReceived((byte)(b));
         }
       } catch (Exception e) {

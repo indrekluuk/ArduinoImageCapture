@@ -18,6 +18,7 @@ public class MainWindow {
 
   private static final String WINDOW_TITLE = "Arduino Image Capture";
   private static final String BUTTON_NAME_LISTEN = "Listen";
+  private static final String BUTTON_NAME_STOP = "Stop";
   private static final String BUTTON_NAME_SELECT_SAVE_FOLDER = "Select save folder";
   private static final String SELECT_SAVE_FOLDER_TILE = "Save images to";
 
@@ -102,48 +103,66 @@ public class MainWindow {
   private JToolBar createToolbar() {
     JToolBar toolBar = new JToolBar();
     toolBar.setFloatable(false);
-    toolBar.add(createComPortOption());
-    toolBar.add(createBaudRateOption());
-    toolBar.add(createStartListeningButton());
+    createComPortOption(toolBar);
+    createBaudRateOption(toolBar);
+    createListeningButtons(toolBar);
     return toolBar;
   }
 
 
-  private JComboBox createComPortOption() {
+  private void createComPortOption(JToolBar toolBar) {
     comPortSelection = new JComboBox<>();
     serialReader.getAvailablePorts().forEach(comPortSelection::addItem);
-    return comPortSelection;
+    toolBar.add(comPortSelection);
   }
 
 
-  private JComboBox createBaudRateOption() {
+  private void createBaudRateOption(JToolBar toolBar) {
     baudRateSelection = new JComboBox<>();
     serialReader.getAvailableBaudRates().forEach(baudRateSelection::addItem);
     baudRateSelection.setSelectedItem(serialReader.getDefaultBaudRate());
-    return baudRateSelection;
+    toolBar.add(baudRateSelection);
   }
 
 
-  private JButton createStartListeningButton() {
-    JButton listenButton = new JButton(BUTTON_NAME_LISTEN);
-    listenButton.addActionListener((event)->{
-      this.startListening(listenButton, event);
+  private void createListeningButtons(JToolBar toolBar) {
+    JButton startListenButton = new JButton(BUTTON_NAME_LISTEN);
+    JButton stopListenButton = new JButton(BUTTON_NAME_STOP);
+    stopListenButton.setEnabled(false);
+
+    startListenButton.addActionListener((event)->{
+      this.startListening(startListenButton, stopListenButton, event);
     });
-    return listenButton;
+
+    stopListenButton.addActionListener((event)->{
+      this.stopListening(startListenButton, stopListenButton, event);
+    });
+
+    toolBar.add(startListenButton);
+    toolBar.add(stopListenButton);
   }
 
-
-  private void startListening(JButton listenButton, ActionEvent event) {
+  private void startListening(JButton startListenButton, JButton stopListenButton, ActionEvent event) {
     try {
       String selectedComPort = (String)comPortSelection.getSelectedItem();
       Integer baudRate = (Integer)baudRateSelection.getSelectedItem();
       serialReader.startListening(selectedComPort, baudRate);
-      listenButton.setEnabled(false);
+      startListenButton.setEnabled(false);
+      stopListenButton.setEnabled(true);
     } catch (SerialReaderException e) {
       JOptionPane.showMessageDialog(windowFrame, e.getMessage());
     }
   }
 
+  private void stopListening(JButton startListenButton, JButton stopListenButton, ActionEvent event) {
+    try {
+      serialReader.stopListening();
+      startListenButton.setEnabled(true);
+      stopListenButton.setEnabled(false);
+    } catch (SerialReaderException e) {
+      JOptionPane.showMessageDialog(windowFrame, e.getMessage());
+    }
+  }
 
 
   private void drawImage(Frame frame, Integer lineIndex) {
