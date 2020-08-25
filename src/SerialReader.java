@@ -66,7 +66,7 @@ public class SerialReader implements SerialPortDataListener {
       serialPort = openSerialPort;
       serialPort.openPort();
 
-      serialPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, TIME_OUT, TIME_OUT);
+      serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING, TIME_OUT, TIME_OUT);
       serialPort.setComPortParameters(
               baudRate,
               8,
