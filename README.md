@@ -54,9 +54,8 @@ Then select "ArduinoImageCapture:jar"->"Build"
   
 4. Now There should be "ArduinoImageCapture.jar" in "out/artifacts/ArduinoImageCapture_jar" folder
   
-5. Now if you open "out/artifacts/ArduinoImageCapture_jar" in Explorer you should be able to double click on the "ArduinoImageCapture.jar" and program should open
-![Double-Click](https://user-images.githubusercontent.com/1666508/91224706-2e065b80-e72b-11ea-925e-f2c23cdddb83.png)
-
+5. Now you can run it from command line with ("cd" to the jar folder):
+java -jar ArduinoImageCapture-master.jar
 
 
 
