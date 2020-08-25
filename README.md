@@ -26,14 +26,6 @@ Next -> Finish
 - Name the configuration and select main java class
 ![selecttarget](https://cloud.githubusercontent.com/assets/1666508/25311682/20783886-2810-11e7-8ae7-6ecf5cee3a85.png)
 
-- Add java external library path (for rxtx library dll file) to the VM options field:
-![selecttarget](https://user-images.githubusercontent.com/1666508/48670234-f06bac00-eb1c-11e8-8a75-7b30c7bdf2e9.png)
-Since I have 64bit Java for windows I had to add:  
--Djava.library.path=lib/rxtx-2.2pre2-bins/win64  
-For MacOS:  
--Djava.library.path=lib/rxtx-2.2pre2-bins/mac-10.5  
-  
-  
 - Now you should be able to run the application by clicking the green arrow in the upper right corner.
 ![run](https://cloud.githubusercontent.com/assets/1666508/25311701/6b3b2c0c-2810-11e7-8d70-1218eb92da40.png)
 
@@ -61,8 +53,6 @@ Then select "ArduinoImageCapture:jar"->"Build"
 ![Build Jar](https://user-images.githubusercontent.com/1666508/54083601-3d72c880-432e-11e9-957e-9e78611b135c.png)
   
 4. Now There should be "ArduinoImageCapture.jar" in "out/artifacts/ArduinoImageCapture_jar" folder
-Copy your platform specific "rxtxSerial.dll" next to the "ArduinoImageCapture.jar".
-![Copy DLL](https://user-images.githubusercontent.com/1666508/54083602-3ea3f580-432e-11e9-98ed-cc9c6866e9f1.png)
   
 5. Now if you open "out/artifacts/ArduinoImageCapture_jar" in Explorer you should be able to double click on the "ArduinoImageCapture.jar" and program should open
 ![Double-Click](https://user-images.githubusercontent.com/1666508/54083689-d35b2300-432f-11e9-96f1-3772a4457e7e.png)
