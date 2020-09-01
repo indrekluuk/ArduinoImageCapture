@@ -197,11 +197,16 @@ public class ImageCapture {
 
 
   private boolean processDebugData(byte [] frameDataBytes) {
-    if (frameDataBytes[frameDataBytes.length - 1] != COMMAND_DEBUG_DATA) {
-      commandByteCount++; // keep reading until we receive 0x03 again;
-      return false;
+    if (commandByteCount == 1) {
+      int messageLength = frameDataBytes[0];
+      if (messageLength == 0)  {
+        return true;
+      } else {
+        commandByteCount = messageLength + 1;
+        return false;
+      }
     } else {
-      String debugText = new String(frameDataBytes, 0, frameDataBytes.length - 1, StandardCharsets.UTF_8);
+      String debugText = new String(frameDataBytes, 1, frameDataBytes.length - 1, StandardCharsets.UTF_8);
       debugDataCallback.debugDataReceived(debugText);
       return true;
     }
