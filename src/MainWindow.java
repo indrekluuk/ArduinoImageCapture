@@ -32,6 +32,7 @@ public class MainWindow {
   private Integer saveCounter = 0;
   private BufferedImage imageBuffer;
   private JLabel imageContainer;
+  private TextArea debugWindow;
   private JComboBox<String> comPortSelection;
   private JComboBox<Integer> baudRateSelection;
 
@@ -42,18 +43,23 @@ public class MainWindow {
 
   public MainWindow(JFrame frame) {
     windowFrame = frame;
-    imageCapture = new ImageCapture(this::drawImage);
+    imageCapture = new ImageCapture(this::drawImage, this::debugTextReceived);
     serialReader = new SerialReader(imageCapture::addReceivedByte);
 
     mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(createToolbar(), BorderLayout.PAGE_START);
-    mainPanel.add(createImagePanel(), BorderLayout.CENTER);
+
+    JPanel contentPanel = new JPanel(new BorderLayout());
+    contentPanel.add(createImagePanel(), BorderLayout.PAGE_START);
+    contentPanel.add(createDebugWindow());
+    mainPanel.add(new JScrollPane(contentPanel));
+
     mainPanel.add(createSavePanel(), BorderLayout.PAGE_END);
   }
 
 
   private JComponent createSavePanel() {
-    JPanel  saveBar = new JPanel ();
+    JPanel saveBar = new JPanel ();
     saveBar.setLayout(new BoxLayout(saveBar, BoxLayout.X_AXIS));
     JLabel filePathLabel = new JLabel();
 
@@ -89,14 +95,15 @@ public class MainWindow {
   }
 
   private JComponent createImagePanel() {
-    imageBuffer = new BufferedImage(MAX_IMAGE_W,MAX_IMAGE_H,BufferedImage.TYPE_INT_ARGB);
+    imageBuffer = new BufferedImage(MAX_IMAGE_W,MAX_IMAGE_H, BufferedImage.TYPE_INT_ARGB);
     imageContainer = new JLabel(new ImageIcon(imageBuffer));
+    return imageContainer;
+  }
 
-    JPanel imagePanel = new JPanel(new GridBagLayout());
-    imagePanel.setPreferredSize(new Dimension(MAX_IMAGE_W, MAX_IMAGE_H));
-    imagePanel.add(imageContainer);
 
-    return new JScrollPane(imagePanel);
+  private Component createDebugWindow() {
+    debugWindow = new TextArea();
+    return debugWindow;
   }
 
 
@@ -190,6 +197,12 @@ public class MainWindow {
         }
       }
     }).start();
+  }
+
+
+  private void debugTextReceived(String debugText) {
+    System.out.println(debugText);
+    debugWindow.append(debugText + "\n");
   }
 
 

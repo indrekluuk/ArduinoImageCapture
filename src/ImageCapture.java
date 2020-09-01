@@ -45,12 +45,17 @@ public class ImageCapture {
     void imageCaptured(Frame frame, Integer lineNumber);
   }
 
+  public interface DebugData {
+    void debugDataReceived(String text);
+  }
 
   private ImageCaptured imageCapturedCallback;
+  private DebugData debugDataCallback;
 
 
-  public ImageCapture(ImageCaptured callback) {
+  public ImageCapture(ImageCaptured callback, DebugData debugCallback) {
     imageCapturedCallback = callback;
+    debugDataCallback = debugCallback;
   }
 
 
@@ -197,7 +202,7 @@ public class ImageCapture {
       return false;
     } else {
       String debugText = new String(frameDataBytes, 0, frameDataBytes.length - 1, StandardCharsets.UTF_8);
-      System.out.println(debugText);
+      debugDataCallback.debugDataReceived(debugText);
       return true;
     }
   }
