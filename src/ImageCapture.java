@@ -1,6 +1,7 @@
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by indrek on 4.05.2016.
@@ -26,6 +27,7 @@ public class ImageCapture {
   private static final byte START_COMMAND = (byte) 0x00;
   private static final byte COMMAND_NEW_FRAME = (byte) 0x01;
   private static final byte COMMAND_END_OF_LINE = (byte) 0x02;
+  private static final byte COMMAND_DEBUG_DATA = (byte) 0x03;
 
   private static final int COMMAND_NEW_FRAME_LENGTH = 5;
 
@@ -76,12 +78,18 @@ public class ImageCapture {
     if (commandBytes.size() >= commandByteCount) {
       if (activeCommand == COMMAND_NEW_FRAME) {
         startNewFrame(commandBytes.toByteArray());
+        activeCommand =-1;
       } else if (activeCommand == COMMAND_END_OF_LINE) {
         endOfLine();
+        activeCommand =-1;
+      } else if (activeCommand == COMMAND_DEBUG_DATA) {
+        if (processDebugData(commandBytes.toByteArray())) {
+          activeCommand =-1;
+        }
       } else {
         System.out.println("Unknown command code '" + activeCommand + "'");
+        activeCommand =-1;
       }
-      activeCommand =-1;
     }
   }
 
@@ -91,6 +99,8 @@ public class ImageCapture {
     pixelBytes.reset();
     if (command == COMMAND_NEW_FRAME) {
       commandByteCount = COMMAND_NEW_FRAME_LENGTH;
+    } else if (command == COMMAND_DEBUG_DATA) {
+      commandByteCount = 1;
     } else {
       commandByteCount = 0;
     }
@@ -177,6 +187,18 @@ public class ImageCapture {
       return ((data[1] & 0xFF) << 8) + (data[0] & 0xFF);
     } else {
       return 0;
+    }
+  }
+
+
+  private boolean processDebugData(byte [] frameDataBytes) {
+    if (frameDataBytes[frameDataBytes.length - 1] != COMMAND_DEBUG_DATA) {
+      commandByteCount++; // keep reading until we receive 0x03 again;
+      return false;
+    } else {
+      String debugText = new String(frameDataBytes, 0, frameDataBytes.length - 1, StandardCharsets.UTF_8);
+      System.out.println(debugText);
+      return true;
     }
   }
 
