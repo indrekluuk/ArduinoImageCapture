@@ -52,13 +52,13 @@ public class ImageCapture {
   private ByteArrayOutputStream commandBytes = new ByteArrayOutputStream();
   private ByteArrayOutputStream pixelBytes = new ByteArrayOutputStream();
 
-  private Frame frame = new Frame(0, 0);
+  private ImageFrame imageFrame = new ImageFrame(0, 0);
   private PixelFormat pixelFormat = PixelFormat.PIXEL_RGB565;
 
 
 
   public interface ImageCaptured {
-    void imageCaptured(Frame frame, Integer lineNumber);
+    void imageCaptured(ImageFrame imageFrame, Integer lineNumber);
   }
 
   public interface DebugData {
@@ -137,7 +137,7 @@ public class ImageCapture {
     frameData.order(ByteOrder.BIG_ENDIAN); // or LITTLE_ENDIAN
     int w = parseFrameDimension(frameData.getShort(), 1, MAX_W);
     int h = parseFrameDimension(frameData.getShort(), 1, MAX_H);
-    frame = new Frame(w, h);
+    imageFrame = new ImageFrame(w, h);
     pixelFormat = getPixelFormat(frameData.get());
   }
 
@@ -163,15 +163,15 @@ public class ImageCapture {
 
 
   private void endOfLine() {
-    imageCapturedCallback.imageCaptured(frame, frame.getCurrentLineIndex());
-    frame.newLine();
+    imageCapturedCallback.imageCaptured(imageFrame, imageFrame.getCurrentLineIndex());
+    imageFrame.newLine();
   }
 
 
   private void processPixelByte(byte receivedByte) {
     pixelBytes.write(receivedByte);
     if (pixelBytes.size() >= pixelFormat.getByteCount()) {
-      frame.addPixel(readAvailablePixel());
+      imageFrame.addPixel(readAvailablePixel());
     }
   }
 
@@ -186,8 +186,7 @@ public class ImageCapture {
         return parse2BytePixel(pixelDataBytes);
       }
       case PIXEL_RGB565_WITH_PARITY_CHECK: {
-        byte [] pixelDataBytes = readAvailablePixelDataBytesWithParityCheck();
-        return parse2BytePixel(pixelDataBytes);
+        return readAvailablePixelWithParityCheck();
       }
       case PIXEL_GRAYSCALE: {
         int rawPixelData = pixelBytes.toByteArray()[0] & 0xFF;
@@ -211,39 +210,49 @@ public class ImageCapture {
   }
 
 
-  private byte [] readAvailablePixelDataBytesWithParityCheck() {
+  private Pixel readAvailablePixelWithParityCheck() {
     byte [] pixelDataBytes = pixelBytes.toByteArray();
     boolean isFirstByteHigh = isParityCheckHighByte(pixelDataBytes[0]);
     boolean isSecondByteLow = isParityCheckLowByte(pixelDataBytes[1]);
 
     if (isFirstByteHigh && isSecondByteLow) {
       pixelBytes.reset();
-      return pixelDataBytes;
+      return parse2BytePixel(pixelDataBytes);
 
     } else if (!isFirstByteHigh) {
       byte [] fixedPixedDataBytes = new byte[2];
-      fixedPixedDataBytes[0] = 0;
-      fixedPixedDataBytes[1] = pixelDataBytes[0];
+      fixedPixedDataBytes[0] = 0; // RRRRRGGG
+      fixedPixedDataBytes[1] = pixelDataBytes[0]; // GGGBBBBB
       pixelBytes.reset();
       pixelBytes.write(pixelDataBytes[1]);
-      return fixedPixedDataBytes;
+      Pixel fixedPixel = parse2BytePixel(fixedPixedDataBytes);
+      // Only blue is valid if only second byte is valid
+      fixedPixel.invalidateR();
+      fixedPixel.invalidateG();
+      return fixedPixel;
 
     } else {
       byte [] fixedPixedDataBytes = new byte[2];
-      fixedPixedDataBytes[0] = pixelDataBytes[0];
-      fixedPixedDataBytes[1] = 0;
+      fixedPixedDataBytes[0] = pixelDataBytes[0]; // RRRRRGGG
+      fixedPixedDataBytes[1] = 0; // GGGBBBBB
       pixelBytes.reset();
       pixelBytes.write(pixelDataBytes[1]);
-      return fixedPixedDataBytes;
+      Pixel fixedPixel = parse2BytePixel(fixedPixedDataBytes);
+      // Only red is valid if only first byte is valid
+      fixedPixel.invalidateG();
+      fixedPixel.invalidateB();
+      return fixedPixel;
     }
   }
 
   private boolean isParityCheckHighByte(byte pixelByte) {
+    // RRRRRGGG
     // Pixel Byte H: odd number of bits under H_BYTE_PARITY_CHECK and H_BYTE_PARITY_INVERT
     return ((pixelByte & H_BYTE_PARITY_CHECK) > 0) != ((pixelByte & H_BYTE_PARITY_INVERT) > 0);
   }
 
   private boolean isParityCheckLowByte(byte pixelByte) {
+    // GGGBBBBB
     // Pixel Byte L: even number of bits under L_BYTE_PARITY_CHECK and L_BYTE_PARITY_INVERT
     return ((pixelByte & L_BYTE_PARITY_CHECK) > 0) == ((pixelByte & L_BYTE_PARITY_INVERT) > 0);
   }

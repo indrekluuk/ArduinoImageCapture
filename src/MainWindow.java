@@ -172,7 +172,7 @@ public class MainWindow {
   }
 
 
-  private void drawImage(Frame frame, Integer lineIndex) {
+  private void drawImage(ImageFrame frame, Integer lineIndex) {
     JLabel imageContainer = this.imageContainer;
 
     // update image in a separate thread so it would not block reading data
