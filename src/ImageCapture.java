@@ -141,7 +141,7 @@ public class ImageCapture {
 
 
   private PixelFormat getPixelFormat(int code) {
-    switch (code) {
+    switch (code & 0x07) {
       default:
         System.out.println("Unknown pixel format code '" + code + "'");
       case 1:
