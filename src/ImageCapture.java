@@ -212,28 +212,28 @@ public class ImageCapture {
 
 
   private byte [] readAvailablePixelDataBytesWithParityCheck() {
-    byte [] pixedDataBytes = pixelBytes.toByteArray();
-    boolean isFirstByteHigh = isParityCheckHighByte(pixedDataBytes[0]);
-    boolean isSecondByteLow = isParityCheckLowByte(pixedDataBytes[1]);
+    byte [] pixelDataBytes = pixelBytes.toByteArray();
+    boolean isFirstByteHigh = isParityCheckHighByte(pixelDataBytes[0]);
+    boolean isSecondByteLow = isParityCheckLowByte(pixelDataBytes[1]);
 
     if (isFirstByteHigh && isSecondByteLow) {
       pixelBytes.reset();
-      return pixedDataBytes;
+      return pixelDataBytes;
 
     } else if (!isFirstByteHigh) {
       byte [] fixedPixedDataBytes = new byte[2];
       fixedPixedDataBytes[0] = 0;
-      fixedPixedDataBytes[1] = pixedDataBytes[0];
+      fixedPixedDataBytes[1] = pixelDataBytes[0];
       pixelBytes.reset();
-      pixelBytes.write(pixedDataBytes[1]);
+      pixelBytes.write(pixelDataBytes[1]);
       return fixedPixedDataBytes;
 
     } else {
       byte [] fixedPixedDataBytes = new byte[2];
-      fixedPixedDataBytes[0] = pixedDataBytes[0];
+      fixedPixedDataBytes[0] = pixelDataBytes[0];
       fixedPixedDataBytes[1] = 0;
       pixelBytes.reset();
-      pixelBytes.write(pixedDataBytes[1]);
+      pixelBytes.write(pixelDataBytes[1]);
       return fixedPixedDataBytes;
     }
   }
