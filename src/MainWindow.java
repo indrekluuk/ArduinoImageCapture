@@ -1,4 +1,7 @@
 
+import capture.ImageCapture;
+import capture.ImageFrame;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
