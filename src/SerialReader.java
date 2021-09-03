@@ -25,11 +25,14 @@ public class SerialReader implements SerialPortDataListener {
   private List<Integer> baudRateList = Arrays.asList(
       2000000, //may be unreliable
       1000000,
-      115200,
+      500000,
+      250000,
+      230400,
+      115200/*,
       57600,
       38400,
       19200,
-      9600);
+      9600*/);
 
   public interface SerialDataReceived {
     void serialDataReceived(byte receivedByte);
@@ -125,7 +128,7 @@ public class SerialReader implements SerialPortDataListener {
   }
 
   public Integer getDefaultBaudRate() {
-    return baudRateList.get(1);
+    return baudRateList.get(2);
   }
 
   private Map<String, SerialPort> getSerialPorts() {
