@@ -4,6 +4,9 @@ import capture.commands.AbstractCommand;
 import capture.commands.StartCommand;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by indrek on 4.05.2016.
@@ -66,6 +69,9 @@ public class ImageCapture {
       if (receivedByte == START_COMMAND) {
         activeCommand = new StartCommand(this);
 
+        // Clear pixel buffer if command is received
+        pixelBytes.reset();
+
       } else {
         processPixelByte(receivedByte);
       }
@@ -73,10 +79,6 @@ public class ImageCapture {
     } else {
       activeCommand.addByte(receivedByte);
       activeCommand = activeCommand.process();
-      if (activeCommand == null) {
-        // Reset pixel buffer if command is done.
-        pixelBytes.reset();
-      }
     }
   }
 
@@ -100,35 +102,35 @@ public class ImageCapture {
   private void processPixelByte(byte receivedByte) {
     pixelBytes.write(receivedByte);
     if (pixelBytes.size() >= pixelFormat.getByteCount()) {
-      imageFrame.addPixel(readAvailablePixel());
+      imageFrame.addPixels(readAvailablePixels());
     }
   }
 
 
-  public Pixel readAvailablePixel() {
+  public List<Pixel> readAvailablePixels() {
     switch (pixelFormat) {
       default:
       case PIXEL_RGB565: {
         byte [] pixelDataBytes = pixelBytes.toByteArray();
         pixelBytes.reset();
-        return parse2BytePixel(pixelDataBytes);
+        return Arrays.asList(parse2ByteRgbPixel(pixelDataBytes));
       }
       case PIXEL_RGB565_WITH_PARITY_CHECK: {
-        return readAvailablePixelWithParityCheck();
+        return Arrays.asList(readAvailableRgbPixelWithParityCheck());
       }
       case PIXEL_GRAYSCALE: {
         int rawPixelData = pixelBytes.toByteArray()[0] & 0xFF;
         pixelBytes.reset();
-        int r = rawPixelData;
-        int g = rawPixelData;
-        int b = rawPixelData;
-        return new Pixel(r, g, b);
+        return Arrays.asList(createGrayscalePixel(rawPixelData));
+      }
+      case PIXEL_GRAYSCALE_WITH_PARITY_CHECK: {
+        return readAvailableGrayscalePixelWithParityCheck();
       }
     }
   }
 
 
-  private Pixel parse2BytePixel(byte [] pixelDataBytes) {
+  private Pixel parse2ByteRgbPixel(byte [] pixelDataBytes) {
     int rawPixelData = get2ByteInteger_H_L(pixelDataBytes);
     // rrrr rggg gggb bbbb
     int r = (rawPixelData >> 8) & 0xF8;
@@ -138,14 +140,14 @@ public class ImageCapture {
   }
 
 
-  private Pixel readAvailablePixelWithParityCheck() {
+  private Pixel readAvailableRgbPixelWithParityCheck() {
     byte [] pixelDataBytes = pixelBytes.toByteArray();
-    boolean isFirstByteHigh = isParityCheckHighByte(pixelDataBytes[0]);
-    boolean isSecondByteLow = isParityCheckLowByte(pixelDataBytes[1]);
+    boolean isFirstByteHigh = isParityCheckRgbHighByte(pixelDataBytes[0]);
+    boolean isSecondByteLow = isParityCheckRgbLowByte(pixelDataBytes[1]);
 
     if (isFirstByteHigh && isSecondByteLow) {
       pixelBytes.reset();
-      return parse2BytePixel(pixelDataBytes);
+      return parse2ByteRgbPixel(pixelDataBytes);
 
     } else if (!isFirstByteHigh) {
       byte [] fixedPixedDataBytes = new byte[2];
@@ -153,7 +155,7 @@ public class ImageCapture {
       fixedPixedDataBytes[1] = pixelDataBytes[0]; // GGGBBBBB
       pixelBytes.reset();
       pixelBytes.write(pixelDataBytes[1]);
-      Pixel fixedPixel = parse2BytePixel(fixedPixedDataBytes);
+      Pixel fixedPixel = parse2ByteRgbPixel(fixedPixedDataBytes);
       // Only blue is valid if only second byte is valid
       fixedPixel.invalidateR();
       fixedPixel.invalidateG();
@@ -165,7 +167,7 @@ public class ImageCapture {
       fixedPixedDataBytes[1] = 0; // GGGBBBBB
       pixelBytes.reset();
       pixelBytes.write(pixelDataBytes[1]);
-      Pixel fixedPixel = parse2BytePixel(fixedPixedDataBytes);
+      Pixel fixedPixel = parse2ByteRgbPixel(fixedPixedDataBytes);
       // Only red is valid if only first byte is valid
       fixedPixel.invalidateG();
       fixedPixel.invalidateB();
@@ -173,13 +175,13 @@ public class ImageCapture {
     }
   }
 
-  private boolean isParityCheckHighByte(byte pixelByte) {
+  private boolean isParityCheckRgbHighByte(byte pixelByte) {
     // RRRRRGGG
     // Pixel Byte H: odd number of bits under H_BYTE_PARITY_CHECK and H_BYTE_PARITY_INVERT
     return ((pixelByte & H_BYTE_PARITY_CHECK) > 0) != ((pixelByte & H_BYTE_PARITY_INVERT) > 0);
   }
 
-  private boolean isParityCheckLowByte(byte pixelByte) {
+  private boolean isParityCheckRgbLowByte(byte pixelByte) {
     // GGGBBBBB
     // Pixel Byte L: even number of bits under L_BYTE_PARITY_CHECK and L_BYTE_PARITY_INVERT
     return ((pixelByte & L_BYTE_PARITY_CHECK) > 0) == ((pixelByte & L_BYTE_PARITY_INVERT) > 0);
@@ -200,6 +202,44 @@ public class ImageCapture {
       return 0;
     }
   }
+
+  private List<Pixel> readAvailableGrayscalePixelWithParityCheck() {
+    List<Pixel> pixels = new ArrayList<>();
+    int rawPixelData1 = pixelBytes.toByteArray()[0] & 0xFF;
+    int rawPixelData2 = pixelBytes.toByteArray()[1] & 0xFF;
+    pixelBytes.reset();
+
+    if (isFirstGrayscaleParityFirst(rawPixelData1)) {
+      pixels.add(createGrayscalePixel(rawPixelData1));
+    } else {
+      pixels.add(createInvalidGrayscalePixel());
+      pixels.add(createGrayscalePixel(rawPixelData1));
+      pixelBytes.write(rawPixelData2);
+      return pixels;
+    }
+
+    if (!isFirstGrayscaleParityFirst(rawPixelData2)) {
+      pixels.add(createGrayscalePixel(rawPixelData2));
+      return pixels;
+    } else {
+      pixels.add(createInvalidGrayscalePixel());
+      pixelBytes.write(rawPixelData2);
+      return pixels;
+    }
+  }
+
+  private boolean isFirstGrayscaleParityFirst(int rawPixelData) {
+    return (rawPixelData & 1) == 0;
+  }
+
+  private Pixel createGrayscalePixel(int c) {
+    return new Pixel(c, c, c);
+  }
+
+  private Pixel createInvalidGrayscalePixel() {
+    return new Pixel();
+  }
+
 
 
 }

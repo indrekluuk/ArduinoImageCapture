@@ -1,8 +1,9 @@
 package capture;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by indrek on 7.05.2016.
@@ -29,10 +30,15 @@ public class ImageFrame {
     colIndex = 0;
   }
 
+  public void addPixels(List<Pixel> pixels) {
+    for (Pixel pixel : pixels) {
+      addPixel(pixel);
+    }
+  }
 
   public void addPixel(Pixel pixel) {
     if (lineIndex < pixelMatrix.length
-            && colIndex < pixelMatrix[lineIndex].length) {
+        && colIndex < pixelMatrix[lineIndex].length) {
       pixelMatrix[lineIndex][colIndex] = pixel;
       colIndex++;
     }
@@ -79,7 +85,7 @@ public class ImageFrame {
 
   private Pixel getPixel(int x, int y) {
     return x >= 0 && x < getLineLength() &&
-            y >= 0 && y < getLineCount() ? pixelMatrix[y][x] : null;
+        y >= 0 && y < getLineCount() ? pixelMatrix[y][x] : null;
   }
 
 

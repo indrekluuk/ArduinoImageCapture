@@ -74,7 +74,11 @@ public class CommandNewFrame extends AbstractCommand {
           return PixelFormat.PIXEL_RGB565;
         }
       case 2:
-        return PixelFormat.PIXEL_GRAYSCALE;
+        if ((code & PIXEL_FORMAT_PARITY_CHECK_BIT) > 0) {
+          return PixelFormat.PIXEL_GRAYSCALE_WITH_PARITY_CHECK;
+        } else {
+          return PixelFormat.PIXEL_GRAYSCALE;
+        }
     }
   }
 

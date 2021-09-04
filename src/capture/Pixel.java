@@ -9,10 +9,12 @@ import java.util.Collection;
  */
 public class Pixel {
 
-  private int r;
-  private int g;
-  private int b;
+  private int r = -1;
+  private int g = -1;
+  private int b = -1;
 
+  public Pixel() {
+  }
 
   public Pixel(int r, int g, int b) {
     this.r = r;
