@@ -1,8 +1,5 @@
 package capture;
 
-import capture.commands.AbstractCommand;
-import capture.commands.StartCommand;
-
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +28,7 @@ public class ImageCapture {
   private static final byte START_COMMAND = (byte) 0x00;
 
 
-  private AbstractCommand activeCommand = null;
+  private Command activeCommand = null;
   private ByteArrayOutputStream pixelBytes = new ByteArrayOutputStream();
 
   private ImageFrame imageFrame;
@@ -74,8 +71,7 @@ public class ImageCapture {
   public void addReceivedByte(byte receivedByte) {
     if (activeCommand == null) {
       if (receivedByte == START_COMMAND) {
-        activeCommand = new StartCommand(this);
-
+        activeCommand = new Command(this);
         // Clear pixel buffer if command is received
         pixelBytes.reset();
 
@@ -85,15 +81,12 @@ public class ImageCapture {
 
     } else {
       activeCommand.addByte(receivedByte);
-      activeCommand = activeCommand.process();
+      if (activeCommand.process()) {
+        activeCommand = null;
+      }
     }
   }
 
-
-
-  public void endOfLine() {
-    imageFrame.newLine();
-  }
 
   public void printDebugData(String message) {
     debugDataCallback.debugDataReceived(message);
