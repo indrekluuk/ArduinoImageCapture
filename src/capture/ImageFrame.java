@@ -14,16 +14,19 @@ public class ImageFrame {
   private Pixel[][] pixelMatrix;
   private int lineIndex;
   private int colIndex;
+  private Runnable lineCaptured;
 
 
-  public ImageFrame(int w, int h) {
+  public ImageFrame(int w, int h, Runnable lineCaptured) {
     pixelMatrix = new Pixel[h][w];
     lineIndex = 0;
     colIndex = 0;
+    this.lineCaptured = lineCaptured;
   }
 
 
   public void newLine() {
+    lineCaptured.run();
     if (lineIndex < getLineCount() - 1) {
       lineIndex ++;
     }
@@ -37,10 +40,14 @@ public class ImageFrame {
   }
 
   public void addPixel(Pixel pixel) {
-    if (lineIndex < pixelMatrix.length
-        && colIndex < pixelMatrix[lineIndex].length) {
-      pixelMatrix[lineIndex][colIndex] = pixel;
-      colIndex++;
+    if (lineIndex < pixelMatrix.length) {
+      if (lineIndex < pixelMatrix.length) {
+        pixelMatrix[lineIndex][colIndex] = pixel;
+        colIndex++;
+      }
+    }
+    if (colIndex >= pixelMatrix[lineIndex].length) {
+      newLine();
     }
   }
 
@@ -57,6 +64,9 @@ public class ImageFrame {
     return lineIndex;
   }
 
+  public int getCurrentColIndex() {
+    return colIndex;
+  }
 
   public Color getPixelColor(int x, int y) {
     Pixel pixel = getPixel(x, y);

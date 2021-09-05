@@ -4,10 +4,10 @@ import capture.ImageCapture;
 
 public class StartCommand extends AbstractCommand {
 
+  private static final int SUPPORTED_COMMAND_VERSION = 0x10;
   private static final int COMMAND_MASK = 0b00001111;
 
   private static final byte COMMAND_NEW_FRAME = (byte) 0x01;
-  private static final byte COMMAND_END_OF_LINE = (byte) 0x02;
   private static final byte COMMAND_DEBUG_DATA = (byte) 0x03;
 
 
@@ -26,11 +26,14 @@ public class StartCommand extends AbstractCommand {
     int commandCode = commandByte & COMMAND_MASK;
     int commandVersion = commandByte & ~COMMAND_MASK;
 
+    if (commandVersion != SUPPORTED_COMMAND_VERSION) {
+      imageCapture.printDebugData("Received command version 0x" + Integer.toHexString(commandVersion) + ". Supported command version 0x" + Integer.toHexString(SUPPORTED_COMMAND_VERSION) + ". Please update!");
+      return null;
+    }
+
     switch (commandCode) {
       case COMMAND_NEW_FRAME:
-        return new CommandNewFrame(commandVersion, imageCapture).process();
-      case COMMAND_END_OF_LINE:
-        return new CommandEndOfLine(imageCapture).process();
+        return new CommandNewFrame(imageCapture).process();
       case COMMAND_DEBUG_DATA:
         return new CommandDebugData(imageCapture).process();
       default:

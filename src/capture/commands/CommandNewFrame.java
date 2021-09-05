@@ -8,11 +8,6 @@ import java.nio.ByteOrder;
 
 public class CommandNewFrame extends AbstractCommand {
 
-  private static final int COMMAND_FRAME_VERSION_0 = 0x00;
-  private static final int COMMAND_FRAME_VERSION_1 = 0x10;
-
-  private static final int COMMAND_FRAME_VERSION_0_FRAME_LENGTH = 5;
-
   private static final int PIXEL_FORMAT_CODE_MASK = 0b00000111;
   private static final int PIXEL_FORMAT_PARITY_CHECK_BIT = 0x80;
 
@@ -22,34 +17,20 @@ public class CommandNewFrame extends AbstractCommand {
   private ImageCapture imageCapture;
 
 
-  public CommandNewFrame(int commandVersion, ImageCapture imageCapture) {
-    super(COMMAND_FRAME_VERSION_0 == commandVersion ?
-        COMMAND_FRAME_VERSION_0_FRAME_LENGTH :
-        COMMAND_LENGTH_FROM_FIRST_BYTE);
-    this.commandVersion = commandVersion;
+  public CommandNewFrame(ImageCapture imageCapture) {
+    super(COMMAND_LENGTH_FROM_FIRST_BYTE);
     this.imageCapture = imageCapture;
   }
 
 
   @Override
   public AbstractCommand commandReceived() {
-
-    switch (commandVersion) {
-      case COMMAND_FRAME_VERSION_0:
-        processNewFrame_version_0();
-        break;
-      //case COMMAND_FRAME_VERSION_1:
-      //  break;
-      default:
-        imageCapture.printDebugData("Frame version 0x" + Integer.toHexString(commandVersion) + " not supported! Please download updated version of this program.");
-        break;
-    }
-
+    processNewFrame();
     return null;
   }
 
 
-  private void processNewFrame_version_0() {
+  private void processNewFrame() {
     ByteBuffer frameData = ByteBuffer.wrap(commandBytes.toByteArray());
     frameData.order(ByteOrder.BIG_ENDIAN); // or LITTLE_ENDIAN
     int w = parseFrameDimension(frameData.getShort(), 1, ImageCapture.MAX_W);
